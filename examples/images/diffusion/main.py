@@ -44,7 +44,7 @@ from ldm.util import instantiate_from_config
 
 
 class DataLoaderX(DataLoader):
-# A custom data loader class that inherits from DataLoader
+    # A custom data loader class that inherits from DataLoader
     def __iter__(self):
         # Overriding the __iter__ method of DataLoader to return a BackgroundGenerator
         #This is to enable data laoding in the background to improve training performance
@@ -64,6 +64,7 @@ def get_parser(**parser_kwargs):
             return False
         else:
             raise argparse.ArgumentTypeError("Boolean value expected.")
+
     # Create an ArgumentParser object with specifies kwargs
     parser = argparse.ArgumentParser(**parser_kwargs)
 
@@ -167,6 +168,7 @@ def get_parser(**parser_kwargs):
 
     return parser
 
+
 # A function that returns the non-default arguments between two objects
 def nondefault_trainer_args(opt):
     # create an argument parsser
@@ -177,6 +179,7 @@ def nondefault_trainer_args(opt):
     args = parser.parse_args([])
     # return all non-default arguments
     return sorted(k for k in vars(args) if getattr(opt, k) != getattr(args, k))
+
 
 # A dataset wrapper class to create a pytorch dataset from an arbitrary object
 class WrappedDataset(Dataset):
@@ -190,6 +193,7 @@ class WrappedDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.data[idx]
+
 
 # A function to initialize worker processes
 def worker_init_fn(_):
@@ -209,6 +213,7 @@ def worker_init_fn(_):
         return np.random.seed(np.random.get_state()[1][current_id] + worker_id)
     else:
         return np.random.seed(np.random.get_state()[1][0] + worker_id)
+
 
 #Provide functionality for creating data loadedrs based on provided dataset configurations
 class DataModuleFromConfig(pl.LightningDataModule):
@@ -253,7 +258,7 @@ class DataModuleFromConfig(pl.LightningDataModule):
     def setup(self, stage=None):
         # Instantiate datasets from the dataset configs
         self.datasets = dict((k, instantiate_from_config(self.dataset_configs[k])) for k in self.dataset_configs)
-        
+
         # If wrap is true, create a WrappedDataset for each dataset
         if self.wrap:
             for k in self.datasets:
@@ -381,23 +386,24 @@ class SetupCallback(Callback):
 # PyTorch Lightning callback for ogging images during training and validation of a deep learning model
 class ImageLogger(Callback):
 
-    def __init__(self,
-                 batch_frequency, # Frequency of batches on which to log images
-                 max_images,      # Maximum number of images to log
-                 clamp=True,      # Whether to clamp pixel values to [-1,1]
-                 increase_log_steps=True,   # Whether to increase frequency of log steps exponentially
-                 rescale=True,    # Whetehr to rescale pixel values to [0,1]
-                 disabled=False,  # Whether to disable logging
-                 log_on_batch_idx=False,   # Whether to log on baych index instead of global step
-                 log_first_step=False,     # Whetehr to log on the first step
-                 log_images_kwargs=None):  # Additional keyword arguments to pass to log_images method
+    def __init__(
+        self,
+        batch_frequency,    # Frequency of batches on which to log images
+        max_images,    # Maximum number of images to log
+        clamp=True,    # Whether to clamp pixel values to [-1,1]
+        increase_log_steps=True,    # Whether to increase frequency of log steps exponentially
+        rescale=True,    # Whetehr to rescale pixel values to [0,1]
+        disabled=False,    # Whether to disable logging
+        log_on_batch_idx=False,    # Whether to log on baych index instead of global step
+        log_first_step=False,    # Whetehr to log on the first step
+        log_images_kwargs=None):    # Additional keyword arguments to pass to log_images method
         super().__init__()
         self.rescale = rescale
         self.batch_freq = batch_frequency
         self.max_images = max_images
         self.logger_log_images = {
-            # Dictionary of logger classes and their corresponding logging methods
-            pl.loggers.CSVLogger: self._testtube,   
+        # Dictionary of logger classes and their corresponding logging methods
+            pl.loggers.CSVLogger: self._testtube,
         }
         # Create a list of exponentially increasing log steps, starting from 1 and ending at batch_frequency
         self.log_steps = [2**n for n in range(int(np.log2(self.batch_freq)) + 1)]
@@ -409,14 +415,15 @@ class ImageLogger(Callback):
         self.log_images_kwargs = log_images_kwargs if log_images_kwargs else {}
         self.log_first_step = log_first_step
 
-    @rank_zero_only   # Ensure that only the first process in distributed training executes this method
-    def _testtube(self,         # The PyTorch Lightning module
-                  pl_module,    # A dictionary of images to log.
-                  images,       # 
-                  batch_idx,    # The batch index.
-                  split         # The split (train/val) on which to log the images
-                  ):
-         # Method for logging images using test-tube logger
+    @rank_zero_only    # Ensure that only the first process in distributed training executes this method
+    def _testtube(
+            self,    # The PyTorch Lightning module
+            pl_module,    # A dictionary of images to log.
+            images,    #
+            batch_idx,    # The batch index.
+            split    # The split (train/val) on which to log the images
+    ):
+        # Method for logging images using test-tube logger
         for k in images:
             grid = torchvision.utils.make_grid(images[k])
             grid = (grid + 1.0) / 2.0    # -1,1 -> 0,1; c,h,w
@@ -426,15 +433,15 @@ class ImageLogger(Callback):
             pl_module.logger.experiment.add_image(tag, grid, global_step=pl_module.global_step)
 
     @rank_zero_only
-    def log_local(self,          
-                  save_dir,      
-                  split,         # The split (train/val) on which to log the images
-                  images,        # A dictionary of images to log
-                  global_step,   # The global step
-                  current_epoch, # The current epoch.
-                  batch_idx
-                  ):
-    # Method for saving image grids to local file system
+    def log_local(
+            self,
+            save_dir,
+            split,    # The split (train/val) on which to log the images
+            images,    # A dictionary of images to log
+            global_step,    # The global step
+            current_epoch,    # The current epoch.
+            batch_idx):
+        # Method for saving image grids to local file system
         root = os.path.join(save_dir, "images", split)
         for k in images:
             grid = torchvision.utils.make_grid(images[k], nrow=4)
@@ -450,7 +457,7 @@ class ImageLogger(Callback):
             Image.fromarray(grid).save(path)
 
     def log_img(self, pl_module, batch, batch_idx, split="train"):
-    #Function for logging images to both the logger and local file system.
+        #Function for logging images to both the logger and local file system.
         check_idx = batch_idx if self.log_on_batch_idx else pl_module.global_step
         # check if it's time to log an image batch
         if (self.check_frequency(check_idx) and    # batch_idx % self.batch_freq == 0
@@ -653,7 +660,7 @@ if __name__ == "__main__":
     # Sets the seed for the random number generator to ensure reproducibility
     seed_everything(opt.seed)
 
-    # Intinalize and save configuratioon using teh OmegaConf library. 
+    # Intinalize and save configuratioon using teh OmegaConf library.
     try:
         # init and save configs
         configs = [OmegaConf.load(cfg) for cfg in opt.base]
@@ -764,34 +771,34 @@ if __name__ == "__main__":
         # Set up various callbacks, including logging, learning rate monitoring, and CUDA management
         # add callback which sets up log directory
         default_callbacks_cfg = {
-            "setup_callback": {                           # callback to set up the training
+            "setup_callback": {    # callback to set up the training
                 "target": "main.SetupCallback",
                 "params": {
-                    "resume": opt.resume,                 # resume training if applicable
-                    "now": now, 
-                    "logdir": logdir,                     # directory to save the log file
-                    "ckptdir": ckptdir,                   # directory to save the checkpoint file
-                    "cfgdir": cfgdir,                     # directory to save the configuration file
-                    "config": config,                     # configuration dictionary
-                    "lightning_config": lightning_config, # LightningModule configuration
+                    "resume": opt.resume,    # resume training if applicable
+                    "now": now,
+                    "logdir": logdir,    # directory to save the log file
+                    "ckptdir": ckptdir,    # directory to save the checkpoint file
+                    "cfgdir": cfgdir,    # directory to save the configuration file
+                    "config": config,    # configuration dictionary
+                    "lightning_config": lightning_config,    # LightningModule configuration
                 }
             },
-            "image_logger": {                             # callback to log image data
+            "image_logger": {    # callback to log image data
                 "target": "main.ImageLogger",
                 "params": {
-                    "batch_frequency": 750,               # how frequently to log images
-                    "max_images": 4,                      # maximum number of images to log
-                    "clamp": True                         # whether to clamp pixel values to [0,1]
+                    "batch_frequency": 750,    # how frequently to log images
+                    "max_images": 4,    # maximum number of images to log
+                    "clamp": True    # whether to clamp pixel values to [0,1]
                 }
             },
-            "learning_rate_logger": {                     # callback to log learning rate
+            "learning_rate_logger": {    # callback to log learning rate
                 "target": "main.LearningRateMonitor",
                 "params": {
-                    "logging_interval": "step",           # logging frequency (either 'step' or 'epoch')
+                    "logging_interval": "step",    # logging frequency (either 'step' or 'epoch')
         # "log_momentum": True                            # whether to log momentum (currently commented out)
                 }
             },
-            "cuda_callback": {                            # callback to handle CUDA-related operations
+            "cuda_callback": {    # callback to handle CUDA-related operations
                 "target": "main.CUDACallback"
             },
         }
@@ -802,7 +809,7 @@ if __name__ == "__main__":
             callbacks_cfg = lightning_config.callbacks
         else:
             callbacks_cfg = OmegaConf.create()
-        
+
         # If the 'metrics_over_trainsteps_checkpoint' callback is specified in the
         # LightningModule configuration, update the default callbacks configuration
         if 'metrics_over_trainsteps_checkpoint' in callbacks_cfg:
@@ -822,7 +829,7 @@ if __name__ == "__main__":
                 }
             }
             default_callbacks_cfg.update(default_metrics_over_trainsteps_ckpt_dict)
-        
+
         # Merge the default callbacks configuration with the specified callbacks configuration, and instantiate the callbacks
         callbacks_cfg = OmegaConf.merge(default_callbacks_cfg, callbacks_cfg)
 
@@ -881,6 +888,7 @@ if __name__ == "__main__":
                 pudb.set_trace()
 
         import signal
+
         # Assign melk to SIGUSR1 signal and divein to SIGUSR2 signal
         signal.signal(signal.SIGUSR1, melk)
         signal.signal(signal.SIGUSR2, divein)

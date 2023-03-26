@@ -8,7 +8,6 @@ import torch.optim as optim
 from chatgpt.models.base import Actor
 from chatgpt.models.lora import LoraLinear
 from torch.optim import Optimizer
-
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 
@@ -156,7 +155,11 @@ class ColossalAIStrategy(DDPStrategy):
             return model.module
         return model
 
-    def save_model(self, model: nn.Module, path: str, only_rank0: bool = False, tokenizer: Optional[PreTrainedTokenizerBase] = None) -> None:
+    def save_model(self,
+                   model: nn.Module,
+                   path: str,
+                   only_rank0: bool = False,
+                   tokenizer: Optional[PreTrainedTokenizerBase] = None) -> None:
         unwrapped_model = self._unwrap_model(model)
         # TODO : better way to get torch model from gemini model
         # to get torch model from gemini model

@@ -3,24 +3,24 @@ import argparse
 import loralib as lora
 import torch
 import torch.distributed as dist
-from torch.utils.data.distributed import DistributedSampler
-from chatgpt.dataset import SFTDataset, AlpacaDataset, AlpacaDataCollator
+from chatgpt.dataset import AlpacaDataCollator, AlpacaDataset, SFTDataset
 from chatgpt.models.base import RewardModel
 from chatgpt.models.bloom import BLOOMLM
 from chatgpt.models.gpt import GPTLM
-from chatgpt.models.opt import OPTLM
 from chatgpt.models.llama import LlamaLM
+from chatgpt.models.opt import OPTLM
 from chatgpt.trainer import SFTTrainer
 from chatgpt.trainer.strategies import ColossalAIStrategy, DDPStrategy, NaiveStrategy
 from chatgpt.utils import prepare_llama_tokenizer_and_embedding
 from datasets import load_dataset
 from torch.optim import Adam
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 from transformers import AutoTokenizer, BloomTokenizerFast
 from transformers.models.gpt2.tokenization_gpt2 import GPT2Tokenizer
 
-from colossalai.nn.optimizer import HybridAdam
 from colossalai.logging import get_dist_logger
+from colossalai.nn.optimizer import HybridAdam
 
 
 def train(args):
@@ -66,7 +66,7 @@ def train(args):
         )
     else:
         raise ValueError(f'Unsupported model "{args.model}"')
-    
+
     if args.model == 'llama':
         tokenizer = prepare_llama_tokenizer_and_embedding(tokenizer, model)
     else:
@@ -103,9 +103,17 @@ def train(args):
         train_sampler = None
         eval_sampler = None
 
-    train_dataloader = DataLoader(train_dataset, shuffle=(train_sampler is None), sampler=train_sampler, batch_size=args.batch_size, collate_fn=data_collator)
+    train_dataloader = DataLoader(train_dataset,
+                                  shuffle=(train_sampler is None),
+                                  sampler=train_sampler,
+                                  batch_size=args.batch_size,
+                                  collate_fn=data_collator)
     if eval_dataset is not None:
-        eval_dataloader = DataLoader(eval_dataset, shuffle=(eval_sampler is None), sampler=eval_sampler, batch_size=args.batch_size, collate_fn=data_collator)
+        eval_dataloader = DataLoader(eval_dataset,
+                                     shuffle=(eval_sampler is None),
+                                     sampler=eval_sampler,
+                                     batch_size=args.batch_size,
+                                     collate_fn=data_collator)
     else:
         eval_dataloader = None
 
@@ -140,4 +148,3 @@ if __name__ == '__main__':
     parser.add_argument('--log_interval', type=int, default=100, help="how many steps to log")
     args = parser.parse_args()
     train(args)
-
