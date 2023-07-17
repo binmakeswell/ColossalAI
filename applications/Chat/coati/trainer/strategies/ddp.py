@@ -33,10 +33,7 @@ class DDPStrategy(Strategy):
         Strategy for distributed training using torch.distributed.
     """
 
-    def __init__(self,
-                 seed: int = 42,
-                 plugin_initializer: Callable = TorchDDPPlugin
-                 ) -> None:
+    def __init__(self, seed: int = 42, plugin_initializer: Callable = TorchDDPPlugin) -> None:
         self.seed = seed
         super().__init__(plugin_initializer)
 

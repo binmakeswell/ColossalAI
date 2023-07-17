@@ -113,11 +113,12 @@ class FP16TorchMixedPrecision(MixedPrecision):
                                      backoff_factor=backoff_factor,
                                      growth_interval=growth_interval)
 
-    def configure(self,
-                  model: nn.Module,
-                  optimizer: Optional[Optimizer] = None,
-                  criterion: Optional[Callable] = None,
-                  ) -> Tuple[nn.Module, OptimizerWrapper, Callable]:
+    def configure(
+        self,
+        model: nn.Module,
+        optimizer: Optional[Optimizer] = None,
+        criterion: Optional[Callable] = None,
+    ) -> Tuple[nn.Module, OptimizerWrapper, Callable]:
         model = TorchAMPModule(model)
         if optimizer is not None:
             optimizer = TorchAMPOptimizer(optimizer, **self.torch_amp_kwargs)

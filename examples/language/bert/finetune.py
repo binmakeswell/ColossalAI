@@ -38,8 +38,8 @@ def move_to_cuda(batch):
 
 
 @torch.no_grad()
-def evaluate_model(model: nn.Module, test_dataloader: Union[DataLoader, List[DataLoader]], num_labels: int, task_name: str,
-             eval_splits: List[str], coordinator: DistCoordinator):
+def evaluate_model(model: nn.Module, test_dataloader: Union[DataLoader, List[DataLoader]], num_labels: int,
+                   task_name: str, eval_splits: List[str], coordinator: DistCoordinator):
     metric = evaluate.load("glue", task_name, process_id=coordinator.rank, num_process=coordinator.world_size)
     model.eval()
 
@@ -208,7 +208,7 @@ def main():
         train_epoch(epoch, model, optimizer, lr_scheduler, train_dataloader, booster, coordinator)
 
     results = evaluate_model(model, test_dataloader, data_builder.num_labels, args.task, data_builder.eval_splits,
-                       coordinator)
+                             coordinator)
 
     if coordinator.is_master():
         print(results)

@@ -137,7 +137,9 @@ def benchmark(
     }
     logger.info(fmt({f"Memory results (batch_size={batch_size})": memory[f"batch_size_{batch_size}"]}))
 
-    throughput[f"batch_size_{batch_size}"] = {"throughput:": "{:.1f}".format(all_sample * DistCoordinator().world_size / (end_time - start_time))}
+    throughput[f"batch_size_{batch_size}"] = {
+        "throughput:": "{:.1f}".format(all_sample * DistCoordinator().world_size / (end_time - start_time))
+    }
     logger.info(fmt({f"Throughput results (batch_size={batch_size})": throughput[f"batch_size_{batch_size}"]}))
 
     results["throughput"] = throughput

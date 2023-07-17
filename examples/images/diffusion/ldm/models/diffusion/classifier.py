@@ -1,23 +1,21 @@
 import os
-import torch
+from copy import deepcopy
+from glob import glob
+
 import lightning.pytorch as pl
+import torch
+from einops import rearrange
+from ldm.lr_scheduler import LambdaLinearScheduler
+from ldm.models.diffusion.ddpm import LatentDiffusion
+from ldm.modules.diffusionmodules.openaimodel import EncoderUNetModel, UNetModel
+from ldm.util import default, ismap, log_txt_as_img
+from natsort import natsorted
 from omegaconf import OmegaConf
 from torch.nn import functional as F
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
-from copy import deepcopy
-from einops import rearrange
-from glob import glob
-from natsort import natsorted
-from ldm.models.diffusion.ddpm import LatentDiffusion
-from ldm.lr_scheduler import LambdaLinearScheduler
-from ldm.modules.diffusionmodules.openaimodel import EncoderUNetModel, UNetModel
-from ldm.util import log_txt_as_img, default, ismap
 
-__models__ = {
-    'class_label': EncoderUNetModel,
-    'segmentation': UNetModel
-}
+__models__ = {'class_label': EncoderUNetModel, 'segmentation': UNetModel}
 
 
 def disabled_train(self, mode=True):
@@ -87,7 +85,7 @@ class NoisyLatentImageClassifier(pl.LightningModule):
             print(f"Unexpected Keys: {unexpected}")
 
     def load_diffusion(self):
-        model = LatentDiffusion(**self.diffusion_config.get('params',dict()))
+        model = LatentDiffusion(**self.diffusion_config.get('params', dict()))
         self.diffusion_model = model.eval()
         self.diffusion_model.train = disabled_train
         for param in self.diffusion_model.parameters():
@@ -115,7 +113,9 @@ class NoisyLatentImageClassifier(pl.LightningModule):
             continuous_sqrt_alpha_cumprod = self.diffusion_model.sample_continuous_noise_level(x.shape[0], t + 1)
             # todo: make sure t+1 is correct here
 
-        return self.diffusion_model.q_sample(x_start=x, t=t, noise=noise,
+        return self.diffusion_model.q_sample(x_start=x,
+                                             t=t,
+                                             noise=noise,
                                              continuous_sqrt_alpha_cumprod=continuous_sqrt_alpha_cumprod)
 
     def forward(self, x_noisy, t, *args, **kwargs):
@@ -164,12 +164,8 @@ class NoisyLatentImageClassifier(pl.LightningModule):
         log_prefix = 'train' if self.training else 'val'
         log = {}
         log[f"{log_prefix}/loss"] = loss.mean()
-        log[f"{log_prefix}/acc@1"] = self.compute_top_k(
-            logits, targets, k=1, reduction="mean"
-        )
-        log[f"{log_prefix}/acc@5"] = self.compute_top_k(
-            logits, targets, k=5, reduction="mean"
-        )
+        log[f"{log_prefix}/acc@1"] = self.compute_top_k(logits, targets, k=1, reduction="mean")
+        log[f"{log_prefix}/acc@5"] = self.compute_top_k(logits, targets, k=5, reduction="mean")
 
         self.log_dict(log, prog_bar=False, logger=True, on_step=self.training, on_epoch=True)
         self.log('loss', log[f"{log_prefix}/loss"], prog_bar=True, logger=False)
@@ -201,8 +197,12 @@ class NoisyLatentImageClassifier(pl.LightningModule):
         return loss
 
     def reset_noise_accs(self):
-        self.noisy_acc = {t: {'acc@1': [], 'acc@5': []} for t in
-                          range(0, self.diffusion_model.num_timesteps, self.diffusion_model.log_every_t)}
+        self.noisy_acc = {
+            t: {
+                'acc@1': [],
+                'acc@5': []
+            } for t in range(0, self.diffusion_model.num_timesteps, self.diffusion_model.log_every_t)
+        }
 
     def on_validation_start(self):
         self.reset_noise_accs()
@@ -222,15 +222,14 @@ class NoisyLatentImageClassifier(pl.LightningModule):
         optimizer = AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
 
         if self.use_scheduler:
-            scheduler = LambdaLinearScheduler(**self.scheduler_config.get('params',dict()))
+            scheduler = LambdaLinearScheduler(**self.scheduler_config.get('params', dict()))
 
             print("Setting up LambdaLR scheduler...")
-            scheduler = [
-                {
-                    'scheduler': LambdaLR(optimizer, lr_lambda=scheduler.schedule),
-                    'interval': 'step',
-                    'frequency': 1
-                }]
+            scheduler = [{
+                'scheduler': LambdaLR(optimizer, lr_lambda=scheduler.schedule),
+                'interval': 'step',
+                'frequency': 1
+            }]
             return [optimizer], scheduler
 
         return optimizer

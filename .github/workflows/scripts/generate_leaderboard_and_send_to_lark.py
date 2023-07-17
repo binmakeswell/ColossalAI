@@ -312,7 +312,8 @@ def get_discussion_comments(github_token: str, org_name: str, repo_name: str, si
     return user_engagement_count
 
 
-def generate_user_engagement_leaderboard_image(github_token: str, org_name: str, repo_list: List[str], output_path: str) -> bool:
+def generate_user_engagement_leaderboard_image(github_token: str, org_name: str, repo_list: List[str],
+                                               output_path: str) -> bool:
     """
     Generate the user engagement leaderboard image for stats within the last 7 days
 
@@ -335,16 +336,21 @@ def generate_user_engagement_leaderboard_image(github_token: str, org_name: str,
             else:
                 total_engagement_count[name] = count
 
-
     for repo_name in repo_list:
         print(f"Fetching user engagement count for {repo_name}/{repo_name}")
-        issue_pr_engagement_count = get_issue_pull_request_comments(github_token=github_token, org_name=org_name, repo_name=repo_name, since=start_datetime_str)
-        discussion_engagement_count = get_discussion_comments(github_token=github_token, org_name=org_name, repo_name=repo_name, since=start_datetime)
+        issue_pr_engagement_count = get_issue_pull_request_comments(github_token=github_token,
+                                                                    org_name=org_name,
+                                                                    repo_name=repo_name,
+                                                                    since=start_datetime_str)
+        discussion_engagement_count = get_discussion_comments(github_token=github_token,
+                                                              org_name=org_name,
+                                                              repo_name=repo_name,
+                                                              since=start_datetime)
 
         # update the total engagement count
         _update_count(issue_pr_engagement_count)
         _update_count(discussion_engagement_count)
-        
+
     # prepare the data for plotting
     x = []
     y = []
@@ -527,7 +533,8 @@ if __name__ == '__main__':
 
     # generate images
     contrib_success = generate_contributor_leaderboard_image(GITHUB_TOKEN, ORG_NAME, REPO_LIST, CONTRIBUTOR_IMAGE_PATH)
-    engagement_success = generate_user_engagement_leaderboard_image(GITHUB_TOKEN, ORG_NAME, REPO_LIST, USER_ENGAGEMENT_IMAGE_PATH)
+    engagement_success = generate_user_engagement_leaderboard_image(GITHUB_TOKEN, ORG_NAME, REPO_LIST,
+                                                                    USER_ENGAGEMENT_IMAGE_PATH)
 
     # upload images
     APP_ID = os.environ['LARK_APP_ID']

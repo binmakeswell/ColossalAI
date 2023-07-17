@@ -42,10 +42,13 @@ class RandintDataset(Dataset):
         self._datas = torch.randint(
             low=0,
             high=self._vocab_size,
-            size=(self._dataset_length, self._sequence_length,),
+            size=(
+                self._dataset_length,
+                self._sequence_length,
+            ),
             dtype=torch.long,
         )
-        self._labels = torch.randint(low=0, high=self._n_class, size=(self._dataset_length, 1), dtype=torch.long) 
+        self._labels = torch.randint(low=0, high=self._n_class, size=(self._dataset_length, 1), dtype=torch.long)
 
     def __len__(self):
         return self._dataset_length

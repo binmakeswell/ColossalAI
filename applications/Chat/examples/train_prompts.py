@@ -152,26 +152,24 @@ def main(args):
         strategy.prepare((actor, actor_optim), (critic, critic_optim), reward_model, initial_model)
 
     # configure trainer
-    trainer = PPOTrainer(
-        strategy,
-        actor,
-        critic,
-        reward_model,
-        initial_model,
-        actor_optim,
-        critic_optim,
-        kl_coef=args.kl_coef,
-        ptx_coef=args.ptx_coef,
-        train_batch_size=args.train_batch_size,
-        max_length=args.max_seq_len,
-        use_cache=True,
-        do_sample=True,
-        temperature=1.0,
-        top_k=50,
-        pad_token_id=tokenizer.pad_token_id,
-        eos_token_id=tokenizer.eos_token_id,
-        offload_inference_models=args.strategy != 'colossalai_gemini'
-    )
+    trainer = PPOTrainer(strategy,
+                         actor,
+                         critic,
+                         reward_model,
+                         initial_model,
+                         actor_optim,
+                         critic_optim,
+                         kl_coef=args.kl_coef,
+                         ptx_coef=args.ptx_coef,
+                         train_batch_size=args.train_batch_size,
+                         max_length=args.max_seq_len,
+                         use_cache=True,
+                         do_sample=True,
+                         temperature=1.0,
+                         top_k=50,
+                         pad_token_id=tokenizer.pad_token_id,
+                         eos_token_id=tokenizer.eos_token_id,
+                         offload_inference_models=args.strategy != 'colossalai_gemini')
 
     trainer.fit(prompt_dataloader=prompt_dataloader,
                 pretrain_dataloader=pretrain_dataloader,

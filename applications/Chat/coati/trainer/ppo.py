@@ -80,18 +80,13 @@ class PPOTrainer(OnPolicyTrainer):
                  dataloader_pin_memory: bool = True,
                  offload_inference_models: bool = True,
                  callbacks: List[Callback] = [],
-                 **generate_kwargs
-                 ) -> None:
+                 **generate_kwargs) -> None:
         if isinstance(strategy, GeminiStrategy):
             assert not offload_inference_models, \
                 "GeminiPlugin is not compatible with manual model.to('cpu')"
 
         buffer = NaiveReplayBuffer(train_batch_size, buffer_limit, buffer_cpu_offload)
-        super().__init__(
-            strategy, buffer,
-            sample_buffer, dataloader_pin_memory,
-            callbacks
-        )
+        super().__init__(strategy, buffer, sample_buffer, dataloader_pin_memory, callbacks)
 
         self.generate_kwargs = _set_default_generate_kwargs(strategy, generate_kwargs, actor)
         self.experience_maker = NaiveExperienceMaker(actor, critic, reward_model, initial_model, kl_coef)
@@ -139,8 +134,7 @@ class PPOTrainer(OnPolicyTrainer):
         if self.ptx_coef != 0:
             batch = self.pretrain_dataloader.next()
             batch = to_device(batch, self.device)
-            ptx_log_probs = self.actor(batch['input_ids'],
-                                       attention_mask=batch['attention_mask'])['logits']
+            ptx_log_probs = self.actor(batch['input_ids'], attention_mask=batch['attention_mask'])['logits']
             ptx_loss = self.ptx_loss_fn(ptx_log_probs, batch['labels'])
             actor_loss = ptx_loss * self.ptx_coef + actor_loss * (1 - self.ptx_coef)
 
@@ -178,11 +172,7 @@ class PPOTrainer(OnPolicyTrainer):
         else:
             if isinstance(self.dataloader.sampler, DistributedSampler):
                 self.dataloader.sampler.set_epoch(update_step)
-            pbar = tqdm(
-                self.dataloader,
-                desc=f'Train epoch [{update_step + 1}]',
-                disable=not is_rank_0()
-            )
+            pbar = tqdm(self.dataloader, desc=f'Train epoch [{update_step + 1}]', disable=not is_rank_0())
             for experience in pbar:
                 self._on_learn_batch_start()
                 experience.to_device(self.device)

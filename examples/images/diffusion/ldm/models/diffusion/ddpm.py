@@ -27,16 +27,16 @@ from ldm.models.autoencoder import *
 from ldm.models.autoencoder import AutoencoderKL, IdentityFirstStage
 from ldm.models.diffusion.ddim import *
 from ldm.models.diffusion.ddim import DDIMSampler
-from ldm.modules.midas.api import MiDaSInference
 from ldm.modules.diffusionmodules.model import *
 from ldm.modules.diffusionmodules.model import Decoder, Encoder, Model
 from ldm.modules.diffusionmodules.openaimodel import *
 from ldm.modules.diffusionmodules.openaimodel import AttentionPool2d, UNetModel
+from ldm.modules.diffusionmodules.upscaling import ImageConcatWithNoiseAugmentation
 from ldm.modules.diffusionmodules.util import extract_into_tensor, make_beta_schedule, noise_like
 from ldm.modules.distributions.distributions import DiagonalGaussianDistribution, normal_kl
-from ldm.modules.diffusionmodules.upscaling import ImageConcatWithNoiseAugmentation
 from ldm.modules.ema import LitEma
 from ldm.modules.encoders.modules import *
+from ldm.modules.midas.api import MiDaSInference
 from ldm.util import count_params, default, exists, isimage, ismap, log_txt_as_img, mean_flat
 from omegaconf import ListConfig
 from torch.optim.lr_scheduler import LambdaLR

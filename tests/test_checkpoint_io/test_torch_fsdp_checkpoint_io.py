@@ -13,7 +13,7 @@ if version.parse(torch.__version__) >= version.parse('1.12.0'):
     from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
     from colossalai.booster.plugin import TorchFSDPPlugin
 
-from colossalai.testing import rerun_if_address_is_in_use, spawn, check_state_dict_equal
+from colossalai.testing import check_state_dict_equal, rerun_if_address_is_in_use, spawn
 
 
 def compare_nested_dict(dict1, dict2):
@@ -94,7 +94,7 @@ def check_torch_fsdp_ckpt():
         full_msd_restore = fsdp_model.state_dict()
         #full_osd_restore = FSDP.full_optim_state_dict(fsdp_model, optimizer, rank0_only=True)
         sharded_osd_restore = optimizer.state_dict()
-        
+
         assert compare_nested_dict(sharded_osd, sharded_osd_restore)
         assert compare_nested_dict(full_msd_restore, full_msd)
         outputs_sec = fsdp_model(inputs)

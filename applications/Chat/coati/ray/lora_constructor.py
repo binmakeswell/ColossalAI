@@ -1,11 +1,11 @@
-from typing import Any, Callable, Dict, List, Optional
 from collections import OrderedDict
 from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional
 
 import torch
 import torch.nn as nn
-from loralib.layers import LoRALayer
 from coati.models.lora import LoraLinear
+from loralib.layers import LoRALayer
 
 
 @dataclass
@@ -23,19 +23,19 @@ class LoRAConstructor:
     Usage:
         Step 1 (Sender):
             filter_state_dict_lora()
-            
+
         Step 2 (Sender, Optional):
             extract_lora_config()
-            
+
         Step 3 (Sender):
             send state_dict_lora and lora_config_dict
-            
+
         Step 4 (Receiver):
             reconstruct_increase()
-            
+
         Step 5 (Receiver):
             load_state_dict_increase()
-            
+
     '''
 
     def __init__(self):
@@ -72,8 +72,10 @@ class LoRAConstructor:
         return state_dict_increase
 
     def _compute(self, lora_A, lora_B, config=LoRAConfig()):
+
         def T(w):
             return w.T if config.fan_in_fan_out else w
+
         if config.r > 0:
             scaling = config.lora_alpha / config.r
             weight_data_increase = T(lora_B @ lora_A) * scaling

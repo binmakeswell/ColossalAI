@@ -1,15 +1,13 @@
 import os
 import sys
 from copy import deepcopy
-
-import yaml
 from datetime import datetime
 
-from diffusers import StableDiffusionPipeline
 import torch
-
-from main import get_parser
+import yaml
+from diffusers import StableDiffusionPipeline
 from ldm.modules.diffusionmodules.openaimodel import UNetModel
+from main import get_parser
 
 if __name__ == "__main__":
     with torch.no_grad():
@@ -20,9 +18,7 @@ if __name__ == "__main__":
         unet_config = base_config['model']['params']['unet_config']
         diffusion_model = UNetModel(**unet_config).to("cuda:0")
 
-        pipe = StableDiffusionPipeline.from_pretrained(
-            "/data/scratch/diffuser/stable-diffusion-v1-4"
-        ).to("cuda:0")
+        pipe = StableDiffusionPipeline.from_pretrained("/data/scratch/diffuser/stable-diffusion-v1-4").to("cuda:0")
         dif_model_2 = pipe.unet
 
         random_input_ = torch.rand((4, 4, 32, 32)).to("cuda:0")

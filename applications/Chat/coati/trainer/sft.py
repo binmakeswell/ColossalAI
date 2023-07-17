@@ -52,9 +52,7 @@ class SFTTrainer(SLTrainer):
         for batch_id, batch in enumerate(self.train_dataloader):
 
             batch = to_device(batch, torch.cuda.current_device())
-            outputs = self.model(batch["input_ids"],
-                                 attention_mask=batch["attention_mask"],
-                                 labels=batch["labels"])
+            outputs = self.model(batch["input_ids"], attention_mask=batch["attention_mask"], labels=batch["labels"])
 
             loss = outputs.loss
             loss = loss / self.accumulation_steps
@@ -118,8 +116,6 @@ class SFTTrainer(SLTrainer):
 
         self.total_loss = 0
         self.no_epoch_bar = True
-        self.step_bar = tqdm.trange(
-            len(self.train_dataloader) // self.accumulation_steps * self.max_epochs,
-            desc=f'steps',
-            disable=not is_rank_0()
-        )
+        self.step_bar = tqdm.trange(len(self.train_dataloader) // self.accumulation_steps * self.max_epochs,
+                                    desc=f'steps',
+                                    disable=not is_rank_0())

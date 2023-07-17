@@ -43,37 +43,37 @@ class LowLevelZeroStrategy(DDPStrategy):
 
     """
 
-    def __init__(self,
-                 stage: int = 3,
-                 precision: str = 'fp16',
-                 seed: int = 42,
-                 placement_policy: str = 'cuda',
-                 reduce_bucket_size: int = 12 * 1024**2,    # only for stage 1&2
-                 overlap_communication: bool = True,    # only for stage 1&2
-                 initial_scale: float = 2**16,
-                 growth_factor: float = 2,
-                 backoff_factor: float = 0.5,
-                 growth_interval: int = 1000,
-                 hysteresis: int = 2,
-                 min_scale: float = 1,
-                 max_scale: float = 2**32,
-                 max_norm: float = 0.0,
-                 norm_type: float = 2.0
-                 ) -> None:
+    def __init__(
+            self,
+            stage: int = 3,
+            precision: str = 'fp16',
+            seed: int = 42,
+            placement_policy: str = 'cuda',
+            reduce_bucket_size: int = 12 * 1024**2,    # only for stage 1&2
+            overlap_communication: bool = True,    # only for stage 1&2
+            initial_scale: float = 2**16,
+            growth_factor: float = 2,
+            backoff_factor: float = 0.5,
+            growth_interval: int = 1000,
+            hysteresis: int = 2,
+            min_scale: float = 1,
+            max_scale: float = 2**32,
+            max_norm: float = 0.0,
+            norm_type: float = 2.0) -> None:
 
         assert stage in (1, 2), f'Unsupported stage "{stage}"'
         assert placement_policy in ('cpu', 'cuda'), f'Unsupported placement policy "{placement_policy}"'
         assert precision in ('fp32', 'fp16'), f'Unsupported precision "{precision}"'
 
         plugin_initializer = lambda: LowLevelZeroPlugin(
-            # zero_config
+        # zero_config
             stage=stage,
             precision=precision,
-            # zero_optim_config
+        # zero_optim_config
             reduce_bucket_size_in_m=reduce_bucket_size,
             overlap_communication=overlap_communication,
             cpu_offload=(placement_policy == 'cpu'),
-            # optim_config
+        # optim_config
             initial_scale=initial_scale,
             growth_factor=growth_factor,
             backoff_factor=backoff_factor,
@@ -82,8 +82,7 @@ class LowLevelZeroStrategy(DDPStrategy):
             min_scale=min_scale,
             max_scale=max_scale,
             max_norm=max_norm,
-            norm_type=norm_type
-        )
+            norm_type=norm_type)
 
         super().__init__(seed, plugin_initializer)
 
@@ -132,42 +131,40 @@ class GeminiStrategy(DDPStrategy):
 
     """
 
-    def __init__(self,
-                 seed: int = 42,
-                 shard_init: bool = False,    # only for stage 3
-                 placement_policy: str = 'cuda',
-                 pin_memory: bool = True,    # only for stage 3
-                 force_outputs_fp32: bool = False,    # only for stage 3
-                 search_range_m: int = 32,    # only for stage 3
-                 hidden_dim: Optional[int] = None,    # only for stage 3
-                 min_chunk_size_m: float = 32,    # only for stage 3
-                 gpu_margin_mem_ratio: float = 0.0,    # only for stage 3
-                 initial_scale: float = 2**16,
-                 growth_factor: float = 2,
-                 backoff_factor: float = 0.5,
-                 growth_interval: int = 1000,
-                 hysteresis: int = 2,
-                 min_scale: float = 1,
-                 max_scale: float = 2**32,
-                 max_norm: float = 0.0,
-                 norm_type: float = 2.0
-                 ) -> None:
+    def __init__(
+            self,
+            seed: int = 42,
+            shard_init: bool = False,    # only for stage 3
+            placement_policy: str = 'cuda',
+            pin_memory: bool = True,    # only for stage 3
+            force_outputs_fp32: bool = False,    # only for stage 3
+            search_range_m: int = 32,    # only for stage 3
+            hidden_dim: Optional[int] = None,    # only for stage 3
+            min_chunk_size_m: float = 32,    # only for stage 3
+            gpu_margin_mem_ratio: float = 0.0,    # only for stage 3
+            initial_scale: float = 2**16,
+            growth_factor: float = 2,
+            backoff_factor: float = 0.5,
+            growth_interval: int = 1000,
+            hysteresis: int = 2,
+            min_scale: float = 1,
+            max_scale: float = 2**32,
+            max_norm: float = 0.0,
+            norm_type: float = 2.0) -> None:
 
         assert placement_policy in ('cpu', 'cuda'), f'Unsupported placement policy "{placement_policy}"'
 
         # TODO(ver217): support shard_init when using from_pretrained()
         if shard_init:
-            warnings.warn(
-                f'Shard init is not supported model.from_pretrained() yet. '
-                'Please load weights after strategy.prepare()'
-            )
+            warnings.warn(f'Shard init is not supported model.from_pretrained() yet. '
+                          'Please load weights after strategy.prepare()')
         self.shard_init = shard_init
 
         warnings.warn(f'Stage 3 only supports fp16. Precision is set to fp16.')
 
         # NOTE: dist should be initialized before calling get_current_device()
         plugin_initializer = lambda: GeminiPlugin(
-            # gemini_config
+        # gemini_config
             device=get_current_device(),
             placement_policy=placement_policy,
             precision='fp16',
@@ -177,9 +174,9 @@ class GeminiStrategy(DDPStrategy):
             search_range_m=search_range_m,
             hidden_dim=hidden_dim,
             min_chunk_size_m=min_chunk_size_m,
-            # zero_optim_config
+        # zero_optim_config
             gpu_margin_mem_ratio=gpu_margin_mem_ratio,
-            # optim_config
+        # optim_config
             initial_scale=initial_scale,
             growth_factor=growth_factor,
             backoff_factor=backoff_factor,
@@ -188,8 +185,7 @@ class GeminiStrategy(DDPStrategy):
             min_scale=min_scale,
             max_scale=max_scale,
             max_norm=max_norm,
-            norm_type=norm_type
-        )
+            norm_type=norm_type)
 
         super().__init__(seed, plugin_initializer)
 
